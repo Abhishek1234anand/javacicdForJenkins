@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
+        DOCKER_IMAGE = "abhishekanand/demo-app"
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials-id')
-        DOCKER_IMAGE = "YOUR_DOCKERHUB_USERNAME/demo-app"
         KUBECONFIG_CREDENTIALS = credentials('kubeconfig-credentials-id')
     }
 
@@ -24,9 +24,7 @@ pipeline {
             steps {
                 script {
                     def imageTag = "latest"
-                    bat """
-                    docker build -t %DOCKER_IMAGE%:${imageTag} .
-                    """
+                    bat "docker build -t ${DOCKER_IMAGE}:${imageTag} ."
                 }
             }
         }
@@ -34,12 +32,10 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    withEnv(["DOCKERHUB_USER=${DOCKERHUB_CREDENTIALS_USR}", "DOCKERHUB_PASS=${DOCKERHUB_CREDENTIALS_PSW}"]) {
-                        bat """
-                        echo %DOCKERHUB_PASS% | docker login -u %DOCKERHUB_USER% --password-stdin
-                        docker push %DOCKER_IMAGE%:latest
-                        """
-                    }
+                    bat """
+                    echo ${DOCKERHUB_CREDENTIALS_PSW} | docker login -u ${DOCKERHUB_CREDENTIALS_USR} --password-stdin
+                    docker push ${DOCKER_IMAGE}:latest
+                    """
                 }
             }
         }
@@ -47,18 +43,15 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    withEnv(["KUBECONFIG=${KUBECONFIG_CREDENTIALS}"]) {
-                        writeFile file: 'kubeconfig', text: KUBECONFIG_CREDENTIALS
-                        withEnv(["KUBECONFIG=${pwd()}\\kubeconfig"]) {
-                            bat """
-                            kubectl apply -f k8s/deployment.yaml
-                            kubectl apply -f k8s/service.yaml
-                            """
-                        }
+                    writeFile file: 'kubeconfig', text: KUBECONFIG_CREDENTIALS
+                    withEnv(["KUBECONFIG=${pwd()}\\kubeconfig"]) {
+                        bat """
+                        kubectl apply -f k8s/deployment.yaml
+                        kubectl apply -f k8s/service.yaml
+                        """
                     }
                 }
             }
         }
     }
 }
-
