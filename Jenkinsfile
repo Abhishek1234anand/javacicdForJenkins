@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "abhishekanand/demo-app"
+        DOCKER_IMAGE = "abhishek0000111/demo-app"   // ✅ Correct repo name
     }
 
     stages {
