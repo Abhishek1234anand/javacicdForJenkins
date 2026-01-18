@@ -43,15 +43,12 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                withCredentials([string(credentialsId: 'kubeconfig-credentials-id', variable: 'KUBECONFIG_CONTENT')]) {
-                    script {
-                        writeFile file: 'kubeconfig', text: KUBECONFIG_CONTENT
-                        withEnv(["KUBECONFIG=${pwd()}\\kubeconfig"]) {
-                            bat """
-                            kubectl apply -f k8s/deployment.yaml
-                            kubectl apply -f k8s/service.yaml
-                            """
-                        }
+                withCredentials([file(credentialsId: 'kubeconfig-credentials-id', variable: 'KUBECONFIG_FILE')]) {
+                    withEnv(["KUBECONFIG=${KUBECONFIG_FILE}"]) {
+                        bat """
+                        kubectl apply -f k8s/deployment.yaml
+                        kubectl apply -f k8s/service.yaml
+                        """
                     }
                 }
             }
